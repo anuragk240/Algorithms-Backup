@@ -94,7 +94,7 @@ public class ErrorProneAssembly {
           }
           int other = path.get((i + 2) % numReads);
           int on_overlap = edges.get((i + 1) % numReads);  //overlap between other and next
-          int otherIndex = 2 * readLength - on_overlap - cn_overlap;
+          int otherIndex = 2 * numReads - on_overlap - cn_overlap;
           if (otherIndex <= currentIndex) {
             if (reads[current].charAt(currentIndex) == reads[other].charAt(currentIndex - otherIndex)) {
               reads[next].setCharAt(nextIndex, reads[current].charAt(currentIndex));
