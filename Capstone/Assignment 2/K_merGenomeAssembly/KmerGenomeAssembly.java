@@ -1,53 +1,54 @@
 import java.util.*;
 
-public class UniversalCircularString{
+public class KmerGenomeAssembly {
 	public static void main(String[] args){
+		int lines = 5396;
+		int k = 10;
 		Scanner scanner = new Scanner(System.in);
-		int k = scanner.nextInt();
-		int iterations = (int)Math.pow(2, k);
-		int iteration_minus1 = (int)Math.pow(2, k - 1);
-		
-		String[] k_mers = new String[iterations];
-		String[] k_minus1_mers = new String[iteration_minus1];
-		
-		for(int i = 0; i < iteration_minus1; ++i){
-			StringBuilder builder = new StringBuilder(Integer.toBinaryString(i));
-			k_mers[i] = appendZeroes(builder, k).toString();
-			k_minus1_mers[i] = builder.delete(0, 1).toString();
-			//System.out.println(k_mers[i]);
-			//System.out.println(k_minus1_mers[i]);
+		String[] reads = new String[lines];
+		HashMap<String, Integer> verticesMapping = new HashMap();
+		ArrayList<String> vertices = new ArrayList();
+		int numVertices = 0;
+		for(int i = 0; i < lines; ++i){
+			reads[i] = scanner.nextLine();
+			String prefix = reads[i].substring(0, reads[i].length() - 1);
+			String suffix = reads[i].substring(1, reads[i].length());
+			if(verticesMapping.get(prefix) == null){
+				vertices.add(prefix);
+				verticesMapping.put(prefix, numVertices);
+				numVertices++;
+			}
+			
+			if(verticesMapping.get(suffix) == null){
+				vertices.add(suffix);
+				verticesMapping.put(suffix, numVertices);
+				numVertices++;
+			}
 		}
-		
-		for(int i = iteration_minus1; i < iterations; ++i){
-			StringBuilder builder = new StringBuilder(Integer.toBinaryString(i));
-			k_mers[i] = appendZeroes(builder, k).toString();
-			//System.out.println(k_mers[i]);
-		}
-		
-		Graph graph = buildGraph(iteration_minus1, iterations, k_mers);
-		
+
+		Graph graph = buildGraph(numVertices, lines, verticesMapping, reads);
 		graph.buildCycle(0);
 		DoublyLinkedList cycle = graph.getEulerianCycle();
+		
 		//cycle is in reversed order
-		StringBuilder universalString = new StringBuilder();
+		StringBuilder genome = new StringBuilder();
 		Node node = cycle.start;
 		while(node.next != null){
 			node = node.next;
 		}
 		//traverse in reverse order from here
-		universalString.append(k_minus1_mers[node.vertex]);
+		genome.append(vertices.get(node.vertex));
 		node = node.previous;
 		while(node != null){
-			//System.out.print((node.vertex + 1) + " ");
-			universalString.append(k_minus1_mers[node.vertex].charAt(k - 2));  //k is the length of k mer
+			genome.append(vertices.get(node.vertex).charAt(k - 2));  //k is the length of k-mer
 			node = node.previous;
 		}
 		//System.out.println();
-		universalString.delete(0, k - 2);
-		System.out.println(universalString.toString());
+		genome.delete(0, k - 2);
+		System.out.println(genome.toString());
 	}
 	
-	public static Graph buildGraph(int numVertex, int numEdges, String[] edges){
+	public static Graph buildGraph(int numVertex, int numEdges, HashMap<String, Integer> vertices, String[] edges){
 		DoublyLinkedList[] adjList = new DoublyLinkedList[numVertex];
 		for(int i = 0; i < numVertex; ++i){
 			adjList[i] = new DoublyLinkedList();
@@ -55,19 +56,11 @@ public class UniversalCircularString{
 		for(int i = 0; i < numEdges; ++i){
 			String prefix = edges[i].substring(0, edges[i].length() - 1);
 			String suffix = edges[i].substring(1, edges[i].length());
-			adjList[Integer.parseInt(prefix, 2)].insert(new Node(Integer.parseInt(suffix, 2)));
+			adjList[vertices.get(prefix)].insert(new Node(vertices.get(suffix)));
 		}
 		
 		Graph graph = new Graph(adjList);
 		return graph;
-	}
-	
-	private static StringBuilder appendZeroes(StringBuilder string, int k){
-		string = string.reverse();
-		for(int i = string.length(); i < k; ++i){
-			string.append('0');
-		}
-		return string.reverse();
 	}
 }
 
